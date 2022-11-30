@@ -1,13 +1,19 @@
 def parse_rc_intf(cfg: str) -> dict[str, list[int]]:
+
     vlans = ""
+
     for line in cfg.split("\n"):
         if "interface" in line:
             intf = line.strip("interface ").strip()
         if "confirm" in line:
             vlans += line.split()[-2]
+            mode = "trunk"
         if "add" in line:
             vlans += ","
             vlans += line.split()[-1]
+        if "switchport access vlan" in line:
+            vlans += line.split()[-1]
+            mode = "access"
 
     vlan_list = []
 
@@ -19,4 +25,5 @@ def parse_rc_intf(cfg: str) -> dict[str, list[int]]:
             vlan_list.extend([vid for vid in range(start_vlan, end_vlan)])
         else:
             vlan_list.append(int(vlan))
-    return {intf: sorted(vlan_list)}
+
+    return {intf: {"mode": mode, "vlans": sorted(vlan_list)}}
