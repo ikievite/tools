@@ -6,9 +6,10 @@ from operator import itemgetter
 
 ACCESS_INTF = "untagged"
 TRUNK_INTF = "tagged"
+VLANS_AT_LINE = 32
 
 TRUNK_INTF_TEMPLATE = """interface giga 1/1/{intf_num}
- switchport trunk allowed vlan add {vlans}
+ switchport trunk allowed vlan {vlans} conf
  switchport mode trunk
  switchport reject-frame untagged
  storm-control unknown-multicast pps 1024
@@ -17,8 +18,7 @@ TRUNK_INTF_TEMPLATE = """interface giga 1/1/{intf_num}
 ACCESS_INTF_TEMPLATE = """interface giga 1/1/{intf_num}
  switchport access vlan {vlan}
  storm-control unknown-multicast pps 1024
- storm-control dlf pps 1024
- """
+ storm-control dlf pps 1024"""
 
 
 def parse_rc_intf(cfg: str) -> dict[str, dict[str, list[int]]]:
@@ -133,17 +133,29 @@ def find_common_vlans(
             print(interface, common_vlans)
 
 
-def make_vlan_range(vlan_list: list[int, ...], vlan_range = [], step=0) -> list[str, ...]:
+def make_vlan_range(vlan_list: list[int, ...], step, vlan_range) -> list[str, ...]:
+    """Make vlan range from vlan list.
+
+    Args:
+        vlan_list: list with vlans
+        step: step
+        vlan_range: vlan range
+
+    Returns:
+        list with vlan ranges"""
     step += 1
     first_vlan = vlan_list[0]
-    second_vlan = vlan_list[step]
+    if len(vlan_list) == 1:
+        return vlan_range.append(str(first_vlan))
+    next_vlan = vlan_list[step]
     if not vlan_list:
         return vlan_range
-    if first_vlan + step == second_vlan:
-        make_vlan_range(vlan_list, step)
-    vlan_range.append(f"{first_vlan}-{second_vlan}")
-    make_vlan_range(vlan_list[step:], vlan_range)
-
+    if first_vlan + step == next_vlan:
+        make_vlan_range(vlan_list, step, vlan_range)
+    vlan_range.append(f"{first_vlan}-{first_vlan+step-1}")
+    vlan_list = vlan_list[step:]
+    step = 0
+    make_vlan_range(vlan_list, step, vlan_range)
 
 
 def gen_rc_intf_cfg(dev_vars: dict) -> str:
@@ -161,11 +173,9 @@ def gen_rc_intf_cfg(dev_vars: dict) -> str:
         tagged_vlans = intf_values.get(TRUNK_INTF)
         untagged_vlan = intf_values.get(ACCESS_INTF)
         if tagged_vlans:
+            vlans = ",".join([str(vid) for vid in tagged_vlans])
             config.append(
-                TRUNK_INTF_TEMPLATE.format(
-                    intf_num=intf_num,
-                    vlans=",".join([str(vid) for vid in tagged_vlans]),
-                ),
+                TRUNK_INTF_TEMPLATE.format(intf_num=intf_num, vlans=vlans),
             )
         elif untagged_vlan:
             config.append(
@@ -176,10 +186,10 @@ def gen_rc_intf_cfg(dev_vars: dict) -> str:
 
 if __name__ == "__main__":
     vendor = "rc"
-    filename = "tools/cfg_dlink.txt"
+    filename = "cfg_dlink.txt"
     with open(filename) as fn:
         dev_cfg = fn.read()
-    #dev_vars = parse_dlink_intf(dev_cfg)
-    #print(gen_rc_intf_cfg(dev_vars))
-    v = [10,11,12,20,22]
-    print(make_vlan_range(v))
+    dev_vars = parse_dlink_intf(dev_cfg)
+    print(gen_rc_intf_cfg(dev_vars))
+    # v = [10, 11, 12, 20, 22]
+    # print(make_vlan_range(v, 0, []))
