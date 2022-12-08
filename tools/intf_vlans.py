@@ -166,10 +166,12 @@ def gen_rc_intf_cfg(dev_vars: dict) -> str:
         interface cfg
     """
     config = []
+    all_vlans = []
     for intf_num, intf_values in sorted(dev_vars.items(), key=itemgetter(0)):
         tagged_vlans = intf_values.get(TRUNK_INTF)
         untagged_vlan = intf_values.get(ACCESS_INTF)
         if tagged_vlans:
+            all_vlans.extend(tagged_vlans)
             if len(tagged_vlans) >= VLANS_AT_LINE:
                 vlan_chunks = [
                     tagged_vlans[vid : vid + VLANS_AT_LINE]
@@ -195,9 +197,18 @@ def gen_rc_intf_cfg(dev_vars: dict) -> str:
                     TRUNK_INTF_TEMPLATE.format(intf_num=intf_num, vlans=vlans),
                 )
         elif untagged_vlan:
+            all_vlans.append(untagged_vlan)
             config.append(
                 ACCESS_INTF_TEMPLATE.format(intf_num=intf_num, vlan=untagged_vlan),
             )
+    all_vlans = list(set(all_vlans))
+    if len(all_vlans) >= VLANS_AT_LINE:
+        all_vlans = [
+            all_vlans[vid : vid + VLANS_AT_LINE] for vid in range(0, len(all_vlans), VLANS_AT_LINE)
+        ]
+    for vlan_chunk in all_vlans:
+        vlans = ",".join([str(vid) for vid in vlan_chunk])
+        config.insert(0, f"create vlan {vlans} active")
     return "\n".join(config)
 
 
