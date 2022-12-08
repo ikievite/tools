@@ -166,15 +166,34 @@ def gen_rc_intf_cfg(dev_vars: dict) -> str:
         interface cfg
     """
     config = []
-    dev_vars = parse_dlink_intf(dev_cfg)
     for intf_num, intf_values in sorted(dev_vars.items(), key=itemgetter(0)):
         tagged_vlans = intf_values.get(TRUNK_INTF)
         untagged_vlan = intf_values.get(ACCESS_INTF)
         if tagged_vlans:
-            vlans = ",".join([str(vid) for vid in tagged_vlans])
-            config.append(
-                TRUNK_INTF_TEMPLATE.format(intf_num=intf_num, vlans=vlans),
-            )
+            if len(tagged_vlans) >= VLANS_AT_LINE:
+                vlan_chunks = [
+                    tagged_vlans[vid : vid + VLANS_AT_LINE]
+                    for vid in range(0, len(tagged_vlans), VLANS_AT_LINE)
+                ]
+                vlan_confirmed = vlan_chunks[0]
+                vlan_added = vlan_chunks[1:]
+                vlans = ",".join([str(vid) for vid in vlan_confirmed])
+                intf_cfg = TRUNK_INTF_TEMPLATE.format(intf_num=intf_num, vlans=vlans)
+
+                for vlan_chunk in vlan_added:
+                    vlans = ",".join([str(vid) for vid in vlan_chunk])
+                    insert_position = intf_cfg.find(" switchport mode trunk")
+                    intf_cfg = (
+                        intf_cfg[:insert_position]
+                        + " switchport trunk allowed vlan add {vlans}\n".format(vlans=vlans)
+                        + intf_cfg[insert_position:]
+                    )
+                config.append(intf_cfg)
+            else:
+                vlans = ",".join([str(vid) for vid in tagged_vlans])
+                config.append(
+                    TRUNK_INTF_TEMPLATE.format(intf_num=intf_num, vlans=vlans),
+                )
         elif untagged_vlan:
             config.append(
                 ACCESS_INTF_TEMPLATE.format(intf_num=intf_num, vlan=untagged_vlan),
