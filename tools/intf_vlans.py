@@ -148,8 +148,6 @@ def make_vlan_range(vlan_list: list[int, ...], step, vlan_range) -> list[str, ..
     if len(vlan_list) == 1:
         return vlan_range.append(str(first_vlan))
     next_vlan = vlan_list[step]
-    if not vlan_list:
-        return vlan_range
     if first_vlan + step == next_vlan:
         make_vlan_range(vlan_list, step, vlan_range)
     vlan_range.append(f"{first_vlan}-{first_vlan+step-1}")
