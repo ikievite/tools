@@ -974,13 +974,21 @@ description = "Easily add support for 'non-core' platforms to scrapli"
 category = "main"
 optional = false
 python-versions = ">=3.7"
-files = [
-    {file = "scrapli_community-2022.7.30-py3-none-any.whl", hash = "sha256:929e75822ce72284b0f9d31e141f943ae22c7864fdfe67c6d3c6c5c012c51a77"},
-    {file = "scrapli_community-2022.7.30.tar.gz", hash = "sha256:91da021598183650a34270dd049ebf49aed352bc57c03bb551aa9a19bb2c6ce3"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 scrapli = ">=2021.07.30a1"
+
+[package.extras]
+dev = ["black (==22.10.0)", "darglint (>=1.8.1,<2.0.0)", "isort (>=5.10.1,<6.0.0)", "mypy (==0.991)", "nox (==2022.11.21)", "pycodestyle (>=2.8.0,<3.0.0)", "pydocstyle (>=6.1.1,<7.0.0)", "pylama (>=8.4.0,<9.0.0)", "pylint (==2.15.7)", "pytest (>=7.0.0,<8.0.0)", "pytest-cov (>=3.0.0,<5.0.0)", "toml (>=0.10.2,<1.0.0)"]
+docs = ["mdx-gh-links (>=0.2,<1.0)", "mkdocs (>=1.2.3,<2.0.0)", "mkdocs-gen-files (>=0.4.0,<1.0.0)", "mkdocs-literate-nav (>=0.5.0,<1.0.0)", "mkdocs-material (>=8.1.6,<9.0.0)", "mkdocs-material-extensions (>=1.0.3,<2.0.0)", "mkdocs-section-index (>=0.3.4,<1.0.0)", "mkdocstrings[python] (>=0.19.0,<1.0.0)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/scrapli/scrapli_community"
+reference = "HEAD"
+resolved_reference = "1fd86e71b55fd24d39dc259a43f4cc89176126f6"
 
 [[package]]
 name = "smmap"
@@ -1098,4 +1106,4 @@ typing_extensions = ">=4.0,<5.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "fb02c67042babb13a41970d27e3708997c050af3132fe74859c549a308430d45"
+content-hash = "f8bf91e537b4dcb517e62d66eab14ff7a2126afd3f00279c5c3204b68beea7e4"
