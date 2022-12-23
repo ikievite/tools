@@ -1,10 +1,13 @@
 """Automate network operations."""
 
+import logging
 import os
 from typing import Any, Optional
 
 from dotenv import load_dotenv
 from scrapli import Scrapli
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -12,40 +15,33 @@ AUTH_USERNAME = os.getenv("AUTH_USERNAME")
 AUTH_PASSWORD = os.getenv("AUTH_PASSWORD")
 
 
-def create_vlan(connection, vlan_id: str, vlan_name: Optional[str] = None) -> None:
+def create_vlan(vlan_id: str, vlan_name: Optional[str] = None) -> list[str, ...]:
     """Create vlan on device.
 
     Args:
-        connection: connection to device
         vlan_id: vlan_id
         vlan_name: vlan name
 
-    Raises:
-        Exception: if vlan already exists on device
+    Returns:
+        list with commands
     """
-    if is_vlan_exist(connection, vlan_id):
-        raise Exception(f"VLAN {vlan_id} already exists on device {connection}")
     commands = [f"vlan {vlan_id}"]
     if vlan_name:
         commands.append(f"name {vlan_name}")
-    response = connection.send_configs(commands)
-    response.raise_for_status()
+    commands.append("exit")
+    return commands
 
 
-def delete_vlan(connection, vlan_id: str) -> None:
+def delete_vlan(vlan_id: str) -> list[str]:
     """Delete vlan on device.
 
     Args:
-        connection: connection to device
         vlan_id: vlan_id
 
-    Raises:
-        Exception: if vlan already exists on device
+    Returns:
+        list with commands
     """
-    if not is_vlan_exist(connection, vlan_id):
-        raise Exception(f"VLAN {vlan_id} does not exist on device {connection.host}")
-    response = connection.send_config(f"no vlan {vlan_id}")
-    response.raise_for_status()
+    return [f"no vlan {vlan_id}"]
 
 
 def is_vlan_exist(conn, vlan_id: str) -> bool:
@@ -64,23 +60,40 @@ def is_vlan_exist(conn, vlan_id: str) -> bool:
     return False
 
 
-def add_vlan_trunk_intf(connection, vlan_id: str, intf: str) -> None:
+def add_vlan_trunk_intf(vlan_id: str, intf: str) -> list[str, ...]:
     """Add vlan to trunk interface.
 
     Args:
-        connection: connection to device
         vlan_id: vlan_id
         intf: interface name
     """
-    conf_intf = [f"interface {intf}", f"switchport trunk allowed vlan add {vlan_id}"]
-    response = connection.send_configs(conf_intf)
-    response.raise_for_status()
+    return [f"interface {intf}", f"switchport trunk allowed vlan add {vlan_id}", "exit"]
 
 
 def send_show(device: dict[str, Any], show_command: str) -> str:
     with Scrapli(**device) as conn:
         response = conn.send_command(show_command)
         return response.result
+
+
+def create_vlan_modify_intf(
+    device: dict[str, Any],
+    intf: str,
+    vlan_id: str,
+    vlan_name: Optional[str] = None,
+):
+    commands = []
+    with Scrapli(**device) as conn:
+        if is_vlan_exist(conn, vlan_id=vlan_id):
+            logger.debug(f"VLAN {vlan_id} already exists on device.")
+        else:
+            commands.extend(create_vlan(vlan_id=vlan_id, vlan_name=vlan_name))
+        if intf:
+            commands.extend(add_vlan_trunk_intf(intf=intf, vlan_id=vlan_id))
+        if commands:
+            commands.append("write")
+            response = conn.send_configs(commands)
+            response.raise_for_status()
 
 
 if __name__ == "__main__":
@@ -92,5 +105,5 @@ if __name__ == "__main__":
         "auth_strict_key": False,
         "platform": "raisecom_ros",
     }
-    with Scrapli(**my_device) as conn:
-        add_vlan_trunk_intf(conn, intf="giga 1/1/37", vlan_id="126")
+
+    create_vlan_modify_intf(my_device, vlan_id="127", intf="gigaethernet 1/1/37")
