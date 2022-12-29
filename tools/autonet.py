@@ -151,10 +151,27 @@ if __name__ == "__main__":
         "platform": "raisecom_ros",
     }
 
+    dlink = {
+        "host": "192.168.20.18",
+        "auth_username": AUTH_USERNAME,
+        "auth_password": AUTH_PASSWORD,
+        "auth_strict_key": False,
+        "platform": "dlink_os",
+        "transport_options": {
+            "open_cmd": [
+                "-o",
+                "KexAlgorithms=+diffie-hellman-group1-sha1",
+                "-o",
+                "Ciphers=+aes256-cbc",
+            ],
+        },
+    }
+
     start = perf_counter()
 
-    modify_vlan_intf(sw1, action="add", vlan_id="127", intf="gigaethernet 1/1/37")
-    modify_vlan_intf(sw2, action="add", vlan_id="127", intf="gigaethernet 1/1/27")
+    # modify_vlan_intf(sw1, action="add", vlan_id="127", intf="gigaethernet 1/1/37")
+    # modify_vlan_intf(sw2, action="add", vlan_id="127", intf="gigaethernet 1/1/27")
+    print(send_show(dlink, "sh sw"))
 
     end = perf_counter()
     execution_time = end - start
