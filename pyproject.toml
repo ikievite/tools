@@ -10,7 +10,7 @@ readme = "README.md"
 python = "^3.10"
 requests = "^2.28.1"
 python-dotenv = "^0.21.0"
-scrapli = "^2022.7.30.post1"
+scrapli = {extras = ["asyncssh"], version = "^2022.7.30.post1"}
 scrapli-community = {git = "https://github.com/scrapli/scrapli_community"}
 
 
