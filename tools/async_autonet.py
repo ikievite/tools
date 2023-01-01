@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 from scrapli import AsyncScrapli
 from scrapli.exceptions import ScrapliException
 
+MAX_ASYNC_CONNECTIONS = 50
+
 load_dotenv()
 
 AUTH_USERNAME = os.getenv("AUTH_USERNAME")
@@ -17,6 +19,22 @@ AUTH_PASSWORD = os.getenv("AUTH_PASSWORD")
 
 
 device_params = dict[str, Any]
+
+
+async def with_semaphore(semaphore, func, *args, **kwargs):
+    """Use asyncio.Semaphore when calling the func.
+
+    Args:
+        semaphore: asyncio semaphore
+        func: func
+        *args: args
+        **kwargs: kwargs
+
+    Returns:
+        awaited func
+    """
+    async with semaphore:
+        return await func(*args, **kwargs)
 
 
 async def send_show(device: device_params, command: str) -> str:
@@ -48,8 +66,9 @@ async def run_all(devices: list[device_params], command: str) -> dict[str, str]:
     Returns:
         dict with output
     """
+    sem = asyncio.Semaphore(MAX_ASYNC_CONNECTIONS)
     result_dict = {}
-    coro = [send_show(dev, command) for dev in devices]
+    coro = [with_semaphore(sem, send_show, dev, command) for dev in devices]
     results = await asyncio.gather(*coro, return_exceptions=True)
     for dev, res in zip(devices, results):
         result_dict[dev["host"]] = res
