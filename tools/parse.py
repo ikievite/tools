@@ -3,7 +3,6 @@
 
 from ttp import ttp
 
-
 ttp_template = """
 {{ ip_addr }} {{ proto }} {{ port }} {{ timeout }} {{ retransmit }} {{ key }}
 """
