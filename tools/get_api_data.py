@@ -1,14 +1,20 @@
 """Get API data."""
 
 import logging
+import os
 
 import requests
+from dotenv import load_dotenv
 from requests.exceptions import HTTPError
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+API_MODELS_URLS = os.getenv("API_MODELS_UPL")
 
-def get_data(url):
+
+def get_data(url: str) -> requests.Response:
     """Get API data.
 
     Args:
@@ -28,4 +34,4 @@ def get_data(url):
 
 
 if __name__ == "__main__":
-    print(get_data("https://randomuser.me/api/").json())  # noqa:  WPS421
+    print(get_data(API_MODELS_URLS).json())  # noqa:  WPS421
