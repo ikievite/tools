@@ -57,11 +57,9 @@ def get_all_data(
     yield response[data_field]
     last_page = response.get(meta_field).get("pages")
     for page in range(2, last_page + 1):
-        payload = {"page": page}
-        yield get_data(url, payload=payload)[data_field]
+        yield get_data(url, {"page": page})[data_field]
 
 
 if __name__ == "__main__":
-    switches = get_all_data(API_MODELS_URL)
-    pprint(list(itertools.chain(*switches)))  # noqa: WPS421
-    # print(get_data(API_SWITCHES_URL).json())  # noqa:  WPS421
+    switches = get_all_data(API_SWITCHES_URL)
+    pprint(len(list(itertools.chain(*switches))))  # noqa: WPS421
