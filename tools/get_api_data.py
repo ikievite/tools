@@ -3,6 +3,7 @@
 import itertools
 import json
 import logging
+import operator
 import os
 from pprint import pprint
 from typing import Iterator, Optional
@@ -67,11 +68,43 @@ def get_all_data(
         yield get_data(url, payload)[data_field]
 
 
-if __name__ == "__main__":
-    switches = get_all_data(API_SWITCHES_URL)
-    pprint(len(list(itertools.chain(*switches))))  # noqa: WPS421
+def get_switches_by_model(url: str, model_id: str) -> list[dict[str, str]]:
+    """Get switches by model id.
 
-    dlink_des3526 = "62e1b01d4668a56741394d03"
-    query = json.dumps({"model": dlink_des3526})
-    dlink_des3526_switches = get_all_data(API_SWITCHES_URL, {"query": query})
-    pprint(len(list(itertools.chain(*dlink_des3526_switches))))    # noqa: WPS421
+    Args:
+        url: url
+        model_id: model id
+
+    Returns:
+        list with switches
+    """
+    query = json.dumps({"model": model_id})
+    switches = get_all_data(url, {"query": query})
+    return list(itertools.chain(*switches))
+
+
+def switch_amount(api_models: str, api_switches: str) -> list[tuple[str, int]]:
+    """Get amount of switches by model.
+
+    Args:
+        api_models: url api models
+        api_switches: url api switches
+
+    Returns:
+        list of tuples with models and amount
+    """
+
+    switch_stat = []
+    models = get_all_data(api_models)
+    for model in itertools.chain(*models):
+        model_name = model.get("name")
+        amount = len(get_switches_by_model(api_switches, model.get("id")))
+        switch_stat.append((model_name, amount))
+    return sorted(switch_stat, key=operator.itemgetter(1), reverse=True)
+
+
+if __name__ == "__main__":
+    # switches = get_all_data(API_SWITCHES_URL)
+    # pprint(len(list(itertools.chain(*switches))))  # noqa: WPS421
+    # pprint(len(get_switches_by_model(API_SWITCHES_URL, "62e1b01d4668a56741394d03")))
+    pprint(switch_amount(API_MODELS_URL, API_SWITCHES_URL))  # noqa: WPS421
