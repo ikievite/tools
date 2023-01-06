@@ -1,5 +1,5 @@
 """Automate network operations."""
-
+import json
 import logging
 import os
 from time import perf_counter
@@ -14,6 +14,7 @@ load_dotenv()
 
 AUTH_USERNAME = os.getenv("AUTH_USERNAME")
 AUTH_PASSWORD = os.getenv("AUTH_PASSWORD")
+SSH_KEY_DIR = os.getenv("SSH_KEY_DIR")
 
 
 def create_vlan(vlan_id: str, vlan_name: Optional[str] = None) -> list[str, ...]:
@@ -133,6 +134,19 @@ def modify_vlan_intf(
             response.raise_for_status()
 
 
+def find_ipaddresses(output: str) -> list[str, ...]:
+    """ """
+    ip_addresses = []
+    intf_cfg = json.loads(output)
+    for intf in intf_cfg["configuration"]["interfaces"]["interface"]:
+        intf_unit = intf.get("unit")
+        if intf_unit:
+            for unit in intf_unit:
+                if unit.get("family"):
+                    print(unit.get("family").get("inet"))
+
+
+
 if __name__ == "__main__":
 
     sw1 = {
@@ -167,11 +181,21 @@ if __name__ == "__main__":
         },
     }
 
+    device = {
+        "host": "192.168.1.1",
+        "auth_username": AUTH_USERNAME,
+        "auth_strict_key": False,
+        "auth_private_key": f"{SSH_KEY_DIR}/id_rsa",
+        "platform": "juniper_junos",
+    }
+
     start = perf_counter()
 
     # modify_vlan_intf(sw1, action="add", vlan_id="127", intf="gigaethernet 1/1/37")
     # modify_vlan_intf(sw2, action="add", vlan_id="127", intf="gigaethernet 1/1/27")
-    print(send_show(dlink, "sh sw"))
+    # output1 = send_show(device, "show configuration interfaces | display json")
+    from tests.test_autonet import intf_cfg
+    find_ipaddresses(intf_cfg)
 
     end = perf_counter()
     execution_time = end - start
