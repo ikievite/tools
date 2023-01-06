@@ -1,7 +1,7 @@
 """Tests for int_vlan module."""
 
 
-from tools.intf_vlans import parse_rc_intf, parse_dlink_intf
+from tools.intf_vlans import parse_dlink_intf, parse_rc_intf
 
 
 def test_parse_rc_intf():

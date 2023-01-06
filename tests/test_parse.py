@@ -3,7 +3,6 @@
 
 from tools.parse import find_auth_servers
 
-
 """
 DGS-3200-10:4#show authen server_host      
 Command: show authen server_host
@@ -55,6 +54,7 @@ IP Address           Protocol Port  Timeout Retransmit Key
 
 Total Entries : 1
 """
+
 
 def test_find_auth_servers():
     cfg = """DGS-3200-10:4#show authen server_host      
